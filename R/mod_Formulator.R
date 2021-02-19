@@ -13,7 +13,7 @@ mod_Formulator_ui <- function(id){
     fluidPage(
       fluidRow(
         column(width = 4,
-          shinydashboard::box(
+          shinydashboard::box(title = "Concrete Formulation", status = "primary",
             sliderInput(ns("v_cement"), label = "Cement (kg)", min = 100, max = 550, value = 275),
             sliderInput(ns("v_blast_furnace_slag"), label = "Blast Furnace Slag (kg)", min = 0, max = 375, value = 20),
             sliderInput(ns("v_fly_ash"), label = "Fly Ash (kg)", min = 0, max = 200, value = 0),
@@ -24,8 +24,9 @@ mod_Formulator_ui <- function(id){
             sliderInput(ns("v_age"), label = "Age (days)", min = 1, max = 365, value = 28)
           )
         ),
-        column(width = 4,
-          shinydashboard::box(textOutput(ns("concrete_prediction")))
+        column(width = 8,
+          shinydashboard::valueBoxOutput(ns("concrete_prediction")
+          )
         )
       )
     )
@@ -38,7 +39,7 @@ mod_Formulator_ui <- function(id){
 mod_Formulator_server <- function(input, output, session){
   ns <- session$ns
   
-  output$concrete_prediction <- renderText({
+  output$concrete_prediction <- shinydashboard::renderValueBox({
     
     prediction <- predict(
       model,
@@ -53,7 +54,12 @@ mod_Formulator_server <- function(input, output, session){
       )
     )
     
-    paste("You chose:", round(prediction$.pred, 1), "MPa")
+    shinydashboard::valueBox(
+      value = paste0(round(prediction$.pred, 1), "MPa"),
+      subtitle = "Compressive Strength",
+      color = "light-blue",
+      icon = icon("cog")
+    )
   })
 }
     
