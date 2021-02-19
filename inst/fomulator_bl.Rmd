@@ -1,0 +1,40 @@
+---
+title: "Business Logic for Formulator Module"
+author: "datadavidz"
+date: "2/19/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(workflows)
+```
+
+
+## Prediction from saved xgboost model
+
+```{r}
+#saved xgboost model in "model"
+load("./data/model.rda")
+```
+
+```{r}
+prediction <- predict(
+      model,
+      tibble::tibble("cement" = 275,
+             "blast_furnace_slag" = 20,
+             "fly_ash" = 0,
+             "water" = 185,
+             "superplasticizer" = 5,
+             "coarse_aggregate" = 975,
+             "fine_aggregate" = 775,
+             "age" = 28
+      )
+    )
+
+paste("You chose:", round(prediction$.pred, 1), "MPa")
+```
+

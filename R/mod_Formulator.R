@@ -13,7 +13,16 @@ mod_Formulator_ui <- function(id){
     fluidPage(
       fluidRow(
         column(width = 4,
-          shinydashboard::box(sliderInput(ns("v_cement"), label = "Cement (kg)", min = 100, max = 550, value = 275))
+          shinydashboard::box(
+            sliderInput(ns("v_cement"), label = "Cement (kg)", min = 100, max = 550, value = 275),
+            sliderInput(ns("v_blast_furnace_slag"), label = "Blast Furnace Slag (kg)", min = 0, max = 375, value = 20),
+            sliderInput(ns("v_fly_ash"), label = "Fly Ash (kg)", min = 0, max = 200, value = 0),
+            sliderInput(ns("v_water"), label = "Water (kg)", min = 100, max = 250, value = 185),
+            sliderInput(ns("v_superplasticizer"), label = "Super-plasticizer (kg)", min = 0, max = 35, value = 5),
+            sliderInput(ns("v_coarse_aggregate"), label = "Coarse Aggregate (kg)", min = 800, max = 1150, value = 975),
+            sliderInput(ns("v_fine_aggregate"), label = "Fine Aggregate (kg)", min = 575, max = 1000, value = 775),
+            sliderInput(ns("v_age"), label = "Age (days)", min = 1, max = 365, value = 28)
+          )
         ),
         column(width = 4,
           shinydashboard::box(textOutput(ns("concrete_prediction")))
@@ -33,14 +42,14 @@ mod_Formulator_server <- function(input, output, session){
     
     prediction <- predict(
       model,
-      tibble::tibble("cement" = 275,
-             "blast_furnace_slag" = 20,
-             "fly_ash" = 0,
-             "water" = 185,
-             "superplasticizer" = 5,
-             "coarse_aggregate" = 975,
-             "fine_aggregate" = 775,
-             "age" = 28
+      tibble::tibble("cement" = input$v_cement,
+             "blast_furnace_slag" = input$v_blast_furnace_slag,
+             "fly_ash" = input$v_fly_ash,
+             "water" = input$v_water,
+             "superplasticizer" = input$v_superplasticizer,
+             "coarse_aggregate" = input$v_coarse_aggregate,
+             "fine_aggregate" = input$v_fine_aggregate,
+             "age" = input$v_age
       )
     )
     
