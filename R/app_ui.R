@@ -10,7 +10,8 @@ app_ui <- function(request) {
     golem_add_external_resources(),
     # List the first level UI elements here 
     fluidPage(
-      h1("concrete")
+      h1("concrete"),
+      mod_Formulator_ui("Formulator_ui_1")
     )
   )
 }
