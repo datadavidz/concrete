@@ -30,7 +30,21 @@ mod_Formulator_server <- function(input, output, session){
   ns <- session$ns
   
   output$concrete_prediction <- renderText({
-    paste("You chose:", input$v_cement)
+    
+    prediction <- predict(
+      model,
+      tibble::tibble("cement" = 275,
+             "blast_furnace_slag" = 20,
+             "fly_ash" = 0,
+             "water" = 185,
+             "superplasticizer" = 5,
+             "coarse_aggregate" = 975,
+             "fine_aggregate" = 775,
+             "age" = 28
+      )
+    )
+    
+    paste("You chose:", round(prediction$.pred, 1), "MPa")
   })
 }
     

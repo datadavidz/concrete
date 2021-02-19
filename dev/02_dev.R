@@ -16,6 +16,11 @@
 ## Dependencies ----
 ## Add one line by package you want to add as dependency
 usethis::use_package("shinydashboard")
+usethis::use_package("workflows")
+usethis::use_package("parsnip")
+usethis::use_package("recipes")
+usethis::use_package("xgboost")
+usethis::use_package("tibble")
 
 ## Add modules ----
 ## Create a module infrastructure in R/
