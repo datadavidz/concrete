@@ -10,7 +10,16 @@
 mod_Formulator_ui <- function(id){
   ns <- NS(id)
   tagList(
- 
+    fluidPage(
+      fluidRow(
+        column(width = 4,
+          shinydashboard::box(sliderInput(ns("v_cement"), label = "Cement (kg)", min = 100, max = 550, value = 275))
+        ),
+        column(width = 4,
+          shinydashboard::box(textOutput(ns("concrete_prediction")))
+        )
+      )
+    )
   )
 }
     
@@ -19,7 +28,10 @@ mod_Formulator_ui <- function(id){
 #' @noRd 
 mod_Formulator_server <- function(input, output, session){
   ns <- session$ns
- 
+  
+  output$concrete_prediction <- renderText({
+    paste("You chose:", input$v_cement)
+  })
 }
     
 ## To be copied in the UI
