@@ -9,9 +9,34 @@ app_ui <- function(request) {
     # Leave this function for adding external resources
     golem_add_external_resources(),
     # List the first level UI elements here 
-    fluidPage(
-      h1("concrete"),
-      mod_Formulator_ui("Formulator_ui_1")
+    shinydashboard::dashboardPage(
+      shinydashboard::dashboardHeader(title = "[concrete]"),
+      shinydashboard::dashboardSidebar(
+        shinydashboard::sidebarMenu(
+          shinydashboard::menuItem(
+            "Formulator",
+            tabName = "formulator_tab",
+            icon = icon("cog")
+          ),
+          shinydashboard::menuItem(
+            "Explorer",
+            tabName = "explorer_tab"
+          )
+        )
+      ),
+      shinydashboard::dashboardBody(
+        shinydashboard::tabItems(
+          shinydashboard::tabItem(
+            tabName = "formulator_tab",
+            mod_Formulator_ui("Formulator_ui_1")
+          ),
+          shinydashboard::tabItem(
+            tabName = "explorer_tab",
+            h1("concrete")
+          )
+        )
+      )
+      
     )
   )
 }
