@@ -25,6 +25,7 @@ mod_Formulator_ui <- function(id){
           )
         ),
         column(width = 8,
+          shinydashboard::valueBoxOutput(ns("concrete_volume")),
           shinydashboard::valueBoxOutput(ns("concrete_prediction")
           )
         )
@@ -59,6 +60,32 @@ mod_Formulator_server <- function(input, output, session){
       icon = icon("cog")
     )
   })
+  
+  volume <- reactive({t(spec_vol$specific_volume) %*% as.numeric(as.vector(formulation()[1,1:7]))})
+  
+  output$concrete_volume <- shinydashboard::renderValueBox({
+    
+    if (volume() > 1050) {
+      shinydashboard::valueBox(
+        value = paste0(round(volume(), 1), " m3"),
+        subtitle = "Concrete Volume (TOO MUCH!)",
+        color = "red",
+        icon = icon("flask")
+      )} else if (volume() < 950) {
+        shinydashboard::valueBox(
+          value = paste0(round(volume(), 1), " m3"),
+          subtitle = "Concrete Volume (NOT ENOUGH!)",
+          color = "red",
+          icon = icon("flask")
+        )} else {
+        shinydashboard::valueBox(
+          value = paste0(round(volume(), 1), " m3"),
+          subtitle = "Concrete Volume",
+          color = "green",
+          icon = icon("flask")    
+        )}
+  })
+  
   
   return(formulation)
 }
