@@ -11,6 +11,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(workflows)
+library(here)
+library(tibble)
+library(magrittr)
+library(dplyr)
 ```
 
 
@@ -18,23 +22,60 @@ library(workflows)
 
 ```{r}
 #saved xgboost model in "model"
-load("./data/model.rda")
+load(here::here("data/model.rda"))
+load(here::here("data/spec_vol.rda"))
 ```
 
+Starting formulation
+```{r}
+start_form <- tibble::tribble(~ingredient, ~amount,
+                              "cement", 275,
+                              "blast_furnace_slag", 20,
+                              "fly_ash", 0,
+                              "water", 185,
+                              "superplasticizer", 5,
+                              "coarse_aggregate", 975,
+                              "fine_aggregate", 775
+)
+```
+
+Starting formulation
+```{r}
+formulation <- tibble::tibble("cement" = 275,
+                              "blast_furnace_slag" = 20,
+                              "fly_ash" = 0,
+                              "water" = 185,
+                              "superplasticizer" = 5,
+                              "coarse_aggregate" = 975,
+                              "fine_aggregate"= 775,
+                              "age" = 28
+)
+```
+
+Predict compressive strength using saved model (xgboost)
 ```{r}
 prediction <- predict(
       model,
-      tibble::tibble("cement" = 275,
-             "blast_furnace_slag" = 20,
-             "fly_ash" = 0,
-             "water" = 185,
-             "superplasticizer" = 5,
-             "coarse_aggregate" = 975,
-             "fine_aggregate" = 775,
-             "age" = 28
-      )
-    )
+      formulation
+)
 
-paste("You chose:", round(prediction$.pred, 1), "MPa")
+paste("Predicted compressive strength:", round(prediction$.pred, 1), "MPa")
 ```
 
+Calculate the volume of the ingredients
+```{r}
+volume <- start_form %>%
+  left_join(spec_vol, by = "ingredient") %>%
+  mutate(ingred_vol = amount * specific_volume) %>%
+  pull(ingred_vol) %>%
+  sum
+
+paste("Volume of ingredients:", round(volume, 1), "m^3")
+```
+Approach just multiplying the two vectors
+```{r}
+volume <- t(spec_vol$specific_volume) %*% as.numeric(as.vector(formulation[1,1:7]))
+#volume <- t(spec_vol$specific_volume) %*% as.vector(formulation[1,1:7]) #doesn't work
+
+paste("Volume of ingredients:", round(volume, 1), "m^3")
+```
