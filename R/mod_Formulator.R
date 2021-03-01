@@ -39,23 +39,21 @@ mod_Formulator_ui <- function(id){
 mod_Formulator_server <- function(input, output, session){
   ns <- session$ns
   
+  formulation <- reactive({tibble::tibble("cement" = input$v_cement,
+                                          "blast_furnace_slag" = input$v_blast_furnace_slag,
+                                          "fly_ash" = input$v_fly_ash,
+                                          "water" = input$v_water,
+                                          "superplasticizer" = input$v_superplasticizer,
+                                          "coarse_aggregate" = input$v_coarse_aggregate,
+                                          "fine_aggregate" = input$v_fine_aggregate,
+                                          "age" = input$v_age)})
+  
+  prediction <- reactive({ predict(model, formulation()) })
+  
   output$concrete_prediction <- shinydashboard::renderValueBox({
     
-    prediction <- predict(
-      model,
-      tibble::tibble("cement" = input$v_cement,
-             "blast_furnace_slag" = input$v_blast_furnace_slag,
-             "fly_ash" = input$v_fly_ash,
-             "water" = input$v_water,
-             "superplasticizer" = input$v_superplasticizer,
-             "coarse_aggregate" = input$v_coarse_aggregate,
-             "fine_aggregate" = input$v_fine_aggregate,
-             "age" = input$v_age
-      )
-    )
-    
     shinydashboard::valueBox(
-      value = paste0(round(prediction$.pred, 1), "MPa"),
+      value = paste0(round(prediction()$.pred, 1), "MPa"),
       subtitle = "Compressive Strength",
       color = "light-blue",
       icon = icon("cog")
