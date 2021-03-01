@@ -24,7 +24,8 @@ usethis::use_package("tibble")
 
 ## Add modules ----
 ## Create a module infrastructure in R/
-golem::add_module( name = "Formulator" ) # Name of the module
+golem::add_module( name = "Formulator" )
+golem::add_module( name = "Explorer" )
 golem::add_module( name = "name_of_module2" ) # Name of the module
 
 ## Add helper functions ----

@@ -7,4 +7,5 @@
 app_server <- function( input, output, session ) {
   # List the first level callModules here
   formulation <- callModule(mod_Formulator_server, "Formulator_ui_1")
+  callModule(mod_Explorer_server, "Explorer_ui_1")
 }

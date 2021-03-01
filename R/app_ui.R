@@ -32,7 +32,7 @@ app_ui <- function(request) {
           ),
           shinydashboard::tabItem(
             tabName = "explorer_tab",
-            h1("concrete")
+            mod_Explorer_ui("Explorer_ui_1")
           )
         )
       )
