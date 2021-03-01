@@ -59,6 +59,8 @@ mod_Formulator_server <- function(input, output, session){
       icon = icon("cog")
     )
   })
+  
+  return(formulation)
 }
     
 ## To be copied in the UI

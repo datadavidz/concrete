@@ -6,5 +6,5 @@
 #' @noRd
 app_server <- function( input, output, session ) {
   # List the first level callModules here
-  callModule(mod_Formulator_server, "Formulator_ui_1")
+  formulation <- callModule(mod_Formulator_server, "Formulator_ui_1")
 }
