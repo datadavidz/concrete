@@ -1,0 +1,183 @@
+---
+title: "Create the XGBoost Model for Concrete dataset"
+author: "datadavidz"
+date: "4/9/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(knitr)
+library(readxl)
+library(tidyverse)
+library(here)
+
+#Tidymodels
+library(tidymodels)
+library(vip)
+```
+
+Load the original dataset and reformat the column names
+```{r, include=FALSE}
+numberCols <- 9 #total number of columns in spreadsheet
+
+colTypes <- rep("numeric", numberCols)
+
+concrete_tbl <- read_excel(path = here::here("data-raw/Concrete_Data.xls"), col_types = colTypes)
+
+concrete_tbl <- concrete_tbl %>%
+  rename(cement = starts_with("Cement")) %>%
+  rename(blast_furnace_slag = starts_with("Blast")) %>%
+  rename(fly_ash = starts_with("Fly Ash")) %>%
+  rename(water = starts_with("Water")) %>%
+  rename(superplasticizer = starts_with("Super")) %>%
+  rename(coarse_aggregate = starts_with("Coarse")) %>%
+  rename(fine_aggregate = starts_with("Fine")) %>%
+  rename(age = starts_with("Age")) %>%
+  rename(compressive_strength = starts_with("Concrete"))
+```
+
+### Stage 1: Model Tuning
+
+Initial splitting of the dataset into Training and Test Dataset  Here we use the rsample package to create an 80/20 split.  The concrete dataset contains 1030 formulations of which 825 are randomly assigned to training and 205 are randomly assigned to testing.
+```{r}
+set.seed(123)
+concrete_split <- initial_split(concrete_tbl, prop = 0.80)
+concrete_train <- training(concrete_split)
+concrete_test <- testing(concrete_split)
+```
+
+Preprocessing is accomplished by using the recipe package.  The recipe provides the steps required to transform our raw data into a dataset suitable for machine learning.  The Concrete dataset actually doesn't require much reformatting.  The major issue was the lengthy column names which was addressed immediately after the dataset was imported.  The dataset contained all numerical values and no missing data.  Initially we will just center and scale the predictors before sending to the nnet model.
+```{r}
+concrete_rec <- recipe(compressive_strength ~ ., data = concrete_train) %>%
+  step_center(all_predictors()) %>%
+  step_scale(all_predictors())
+
+concrete_rec
+```
+
+Cross validation folds are created in order to assess the performance of the model parameters.  Here we use 5-fold cross validation to create splits from our training dataset and also using the preprocessing pipeline specified above.
+```{r}
+set.seed(234)
+concrete_folds <- vfold_cv(concrete_train, v = 5)
+
+concrete_folds
+```
+
+Model specifications are created using the parsnip package.  Here we specify a boosted tree model using the XGBoost engine.  Notice that the min n, tree depth and learn rate parameters have been specified to be tuned.  
+```{r}
+xgboost_spec = boost_tree(
+  mode = "regression",
+  trees = 1000,
+  min_n = tune(),
+  tree_depth = tune(),
+  learn_rate = tune()
+) %>%
+  set_engine("xgboost", objective = "reg:squarederror") %>%
+  set_mode("regression")
+
+xgboost_spec
+```
+
+Grid specifications sets up a variety of parameter values used with our model to find which combination yields the lowest prediction error (or best accuracy).  Here we specify the parameter ranges and grid function using the dials package.
+```{r}
+set.seed(345)
+xgboost_grid <- grid_max_entropy(min_n(), tree_depth(), learn_rate(), size = 30)
+
+xgboost_grid
+```
+
+Define a workflow for the tuning process
+```{r}
+concrete_wf <- workflow() %>%
+  add_recipe(concrete_rec) %>%
+  add_model(xgboost_spec)
+```
+
+Hyperparameter tuning is now performed using the tune_grid() function from the tune package.  Here we specific the formula, model, resamples, grid and metrics.  The metrics come from the yardstick package. For regression problems, we can specify multiple metrics such as mae, mape, rmse and rsq into a metric_set().
+```{r, cache = TRUE}
+doParallel::registerDoParallel()
+
+set.seed(456)
+
+begin <- Sys.time()
+
+xgboost_res <- tune_grid(
+  concrete_wf,
+  resamples = concrete_folds,
+  grid = xgboost_grid,
+  metrics = metric_set(rmse, rsq, mae),
+  control = control_grid(save_pred = TRUE)
+)
+
+end1 <- Sys.time() - begin
+```
+
+### Stage 2: Compare and Select the Best Model
+
+Identify the best hyperparameter values using the show_best() function.
+```{r}
+xgboost_res %>% show_best("mae", n = 5)
+```
+
+Visualize the tuning results  
+```{r, echo = FALSE}
+autoplot(xgboost_res)
+```
+
+Select the best parameters based on the lowest mean absolute error.
+```{r}
+params_xgboost_best <- xgboost_res %>% select_best("mae")
+params_xgboost_best
+```
+
+Finalize workflow with the best model parameters
+```{r}
+final_xgboost <- finalize_workflow(concrete_wf, params_xgboost_best)
+
+final_xgboost
+```
+
+Which Features are most important?
+```{r}
+final_xgboost %>%
+  fit(data = concrete_train) %>%
+  pull_workflow_fit() %>%
+  vip(aesthetics = list(fill = "steelblue")) +
+  labs(title = "XGBoost Model Importance - Compressive Strength (MPa) Prediction")
+```
+
+### Stage 3: Train Final Model
+
+Fit model on train and evaluate on test.
+```{r}
+model <- last_fit(final_xgboost, concrete_split, metrics = metric_set(rmse, rsq, mae))
+```
+
+Assess final model performance metrics.
+```{r}
+collect_metrics(model)
+```
+
+Visualize actual vs. predicted compressive strength for final model.
+```{r, echo = FALSE}
+collect_predictions(final_res) %>%
+  ggplot(aes(compressive_strength, .pred)) +
+  geom_abline(slope = 1, lty = 2, color = "gray50", alpha = 0.5) +
+  geom_point(alpha = 0.6, color = "midnightblue") +
+  ylim(0, NA) +
+  labs(title = "XGBoost Model Performance for Concrete Dataset", 
+       x = "Actual Compressive Strength (MPa)", 
+       y = "Predicted Compressive Strength (MPa)")
+```
+
+Save model to package data directory
+```{r}
+usethis::use_data(model, overwrite = TRUE)
+```
+
+
+
