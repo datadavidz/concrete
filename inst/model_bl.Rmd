@@ -154,12 +154,12 @@ final_xgboost %>%
 
 Fit model on train and evaluate on test.
 ```{r}
-model <- last_fit(final_xgboost, concrete_split, metrics = metric_set(rmse, rsq, mae))
+final_res <- last_fit(final_xgboost, split = concrete_split, metrics = metric_set(rmse, rsq, mae))
 ```
 
 Assess final model performance metrics.
 ```{r}
-collect_metrics(model)
+collect_metrics(final_res)
 ```
 
 Visualize actual vs. predicted compressive strength for final model.
@@ -173,6 +173,12 @@ collect_predictions(final_res) %>%
        x = "Actual Compressive Strength (MPa)", 
        y = "Predicted Compressive Strength (MPa)")
 ```
+
+Create final model for future predictions
+```{r}
+model <- fit(final_xgboost, concrete_tbl)
+```
+
 
 Save model to package data directory
 ```{r}
